@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>NexusMed - Panel Principal</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f7f6; padding: 20px; margin: 0; }
+        .header { background: #007bff; color: white; padding: 15px 20px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { margin: 0; font-size: 20px; }
+        button { background: #dc3545; color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; }
+        button:hover { background: #c82333; }
+        .btn-accion { background: #28a745; margin-bottom: 15px; width: 100%; }
+        .btn-accion:hover { background: #218838; }
+        .btn-toggle { background: #17a2b8; margin-bottom: 15px; }
+        .btn-eliminar { background: #dc3545; padding: 5px 10px; font-size: 12px; }
+        .contenido { margin-top: 20px; background: white; padding: 20px; border-radius: 8px; display: flex; gap: 20px; flex-wrap: wrap; }
+        .columna { flex: 1; min-width: 300px; }
+        .caja-formulario { background: #f8f9fa; padding: 20px; border-radius: 8px; border: 1px solid #ddd; }
+        input, select { width: 100%; padding: 10px; margin-bottom: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+        th { background-color: #f8f9fa; }
+        .estado-atendida { color: green; font-weight: bold; }
+        .estado-pendiente { color: orange; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 id="texto-bienvenida">Cargando perfil...</h1>
+        <button onclick="cerrarSesion()">Cerrar Sesión</button>
+    </div>
+    
+    <div class="contenido" id="area-trabajo"></div>
+
+    <script>
+        const usuarioGuardado = localStorage.getItem('usuarioLogueado');
+        let listaAbierta = false;
+        let agendaAbierta = false;
+
+        if (!usuarioGuardado) {
+            window.location.href = 'index.html';
+        } else {
+            const usuario = JSON.parse(usuarioGuardado);
+            document.getElementById('texto-bienvenida').innerText = `Usuario: ${usuario.correo}`;
+            const areaTrabajo = document.getElementById('area-trabajo');
+            
+            if (usuario.rol_id === 1) {
+                areaTrabajo.innerHTML = `
+                    <div class="columna caja-formulario">
+                        <h3>Registrar Nuevo Usuario</h3>
+                        <form id="form-registro" onsubmit="registrarUsuario(event)">
+                            <input type="email" id="nuevo-correo" placeholder="Correo electrónico" required>
+                            <input type="text" id="nuevo-password" placeholder="Contraseña temporal" required>
+                            <select id="nuevo-rol" required>
+                                <option value="1">Administrador</option>
+                                <option value="2">Médico</option>
+                                <option value="3">Paciente</option>
+                            </select>
+                            <button type="submit" class="btn-accion">Guardar Usuario</button>
+                        </form>
+                        <div id="msj-registro" style="font-weight: bold; text-align: center; margin-top: 10px;"></div>
+                    </div>
+                    <div class="columna">
+                        <h3>Gestión de Personal</h3>
+                        <button id="btn-usuarios" class="btn-toggle" onclick="toggleUsuarios()">Ver Lista de Usuarios</button>
+                        <div id="tabla-usuarios"></div>
+                    </div>
+                `;
+            } else if (usuario.rol_id === 2) {
+                areaTrabajo.innerHTML = `
+                    <div class="columna">
+                        <h2>Panel Médico - Mi Agenda</h2>
+                        <button id="btn-citas" class="btn-toggle" onclick="verCitas(${usuario.id})">Consultar Citas de Hoy</button>
+                        <div id="tabla-citas"></div>
+                    </div>
+                `;
+            } else if (usuario.rol_id === 3) {
+                areaTrabajo.innerHTML = `<div class="columna"><h2>Panel de Paciente</h2><p>Aquí irá tu historial médico.</p></div>`;
+            }
+        }
+
+        // --- FUNCIONES DE ADMINISTRADOR ---
+        function registrarUsuario(e) {
+            e.preventDefault();
+            const correo = document.getElementById('nuevo-correo').value;
+            const password = document.getElementById('nuevo-password').value;
+            const rol = document.getElementById('nuevo-rol').value;
+            const msj = document.getElementById('msj-registro');
+
+            msj.style.color = "black";
+            msj.innerText = "Guardando...";
+
+            fetch('http://localhost:3000/api/usuarios', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ correo, password, rol_id: rol })
+            })
+            .then(res => res.json())
+            .then(datos => {
+                if (datos.error) {
+                    msj.style.color = "red";
+                    msj.innerText = datos.error;
+                } else {
+                    msj.style.color = "green";
+                    msj.innerText = datos.mensaje;
+                    document.getElementById('form-registro').reset();
+                    listaAbierta = false; 
+                    toggleUsuarios();
+                }
+            })
+            .catch(() => {
+                msj.style.color = "red";
+                msj.innerText = "Error de conexión con el servidor.";
+            });
+        }
+
+        function eliminarUsuario(id) {
+            if (!confirm('¿Estás seguro de que deseas eliminar a este usuario?')) return;
+            fetch(`http://localhost:3000/api/usuarios/${id}`, { method: 'DELETE' })
+            .then(res => res.json())
+            .then(datos => {
+                if (datos.error) alert(datos.error);
+                else { listaAbierta = false; toggleUsuarios(); }
+            })
+            .catch(() => alert("Error de conexión al eliminar."));
+        }
+
+        function toggleUsuarios() {
+            const contenedor = document.getElementById('tabla-usuarios');
+            const boton = document.getElementById('btn-usuarios');
+
+            if (listaAbierta) {
+                contenedor.innerHTML = '';
+                boton.innerText = 'Ver Lista de Usuarios';
+                listaAbierta = false;
+            } else {
+                contenedor.innerHTML = 'Consultando...';
+                boton.innerText = 'Ocultar Lista de Usuarios';
+                listaAbierta = true;
+
+                fetch('http://localhost:3000/api/usuarios')
+                    .then(res => res.json())
+                    .then(datos => {
+                        let tabla = `<table><tr><th>ID</th><th>Correo</th><th>Rol</th><th>Acciones</th></tr>`;
+                        const nombresRoles = { 1: 'Administrador', 2: 'Médico', 3: 'Paciente' };
+                        datos.forEach(u => {
+                            const rolTexto = nombresRoles[u.rol_id] || 'Desconocido';
+                            tabla += `<tr>
+                                <td>${u.id}</td><td>${u.correo}</td><td>${rolTexto}</td>
+                                <td><button class="btn-eliminar" onclick="eliminarUsuario(${u.id})">Eliminar</button></td>
+                            </tr>`;
+                        });
+                        tabla += `</table>`;
+                        contenedor.innerHTML = tabla;
+                    });
+            }
+        }
+
+        // --- FUNCIONES DE MÉDICO ---
+        function verCitas(medicoId) {
+            const contenedor = document.getElementById('tabla-citas');
+            const boton = document.getElementById('btn-citas');
+
+            if (agendaAbierta) {
+                contenedor.innerHTML = '';
+                boton.innerText = 'Consultar Citas de Hoy';
+                agendaAbierta = false;
+            } else {
+                contenedor.innerHTML = 'Buscando pacientes...';
+                boton.innerText = 'Ocultar Agenda';
+                agendaAbierta = true;
+
+                fetch(`http://localhost:3000/api/citas/${medicoId}`)
+                    .then(res => res.json())
+                    .then(datos => {
+                        if (datos.length === 0) {
+                            contenedor.innerHTML = '<p>No tienes citas programadas.</p>';
+                            return;
+                        }
+                        
+                        let tabla = `<table><tr><th>ID Cita</th><th>ID Paciente</th><th>Fecha</th><th>Hora</th><th>Estado</th></tr>`;
+                        datos.forEach(c => {
+                            // Extraer solo la fecha limpia si viene con formato de zona horaria
+                            const fechaLimpia = new Date(c.fecha).toLocaleDateString();
+                            const claseEstado = c.estado === 'atendida' ? 'estado-atendida' : 'estado-pendiente';
+                            
+                            tabla += `<tr>
+                                <td>${c.id}</td>
+                                <td>${c.paciente_id}</td>
+                                <td>${fechaLimpia}</td>
+                                <td>${c.hora}</td>
+                                <td class="${claseEstado}">${c.estado}</td>
+                            </tr>`;
+                        });
+                        tabla += `</table>`;
+                        contenedor.innerHTML = tabla;
+                    })
+                    .catch(() => {
+                        contenedor.innerHTML = '<p style="color:red;">Error al cargar la agenda.</p>';
+                    });
+            }
+        }
+
+        function cerrarSesion() {
+            localStorage.removeItem('usuarioLogueado');
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>

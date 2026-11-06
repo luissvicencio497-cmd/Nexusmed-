@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexusMed - Sistema Médico Integral</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style> html { scroll-behavior: smooth; } </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans relative">
+
+    <nav class="bg-indigo-900 text-white sticky top-0 z-40 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <div class="flex items-center space-x-3">
+                    <i class="fa-solid fa-heart-pulse text-3xl text-teal-400"></i>
+                    <span class="font-bold text-2xl tracking-wider">NexusMed</span>
+                </div>
+                <div class="hidden md:flex space-x-8 font-medium">
+                    <a href="#inicio" class="hover:text-teal-400 transition">Inicio</a>
+                    <a href="#mision" class="hover:text-teal-400 transition">Impacto Social</a>
+                    <a href="#farmacia" class="hover:text-teal-400 transition">Catálogo de Medicamentos</a>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="window.history.back()" class="bg-indigo-800 hover:bg-indigo-700 text-white font-semibold px-4 py-2 rounded-lg text-sm transition border border-indigo-700">
+                        <i class="fa-solid fa-arrow-left mr-1"></i> Volver
+                    </button>
+                    <a href="login.html" class="bg-teal-500 hover:bg-teal-600 text-white font-bold px-5 py-2.5 rounded-full shadow-md transition text-sm">
+                        Acceso al Portal <i class="fa-solid fa-arrow-right-to-bracket ml-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero con Imagen de Fondo -->
+    <section id="inicio" class="relative bg-indigo-950 text-white py-24 px-4 overflow-hidden">
+        <div class="absolute inset-0 opacity-20 bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=1600&q=80');"></div>
+        <div class="max-w-7xl mx-auto text-center relative z-10">
+            <h1 class="text-5xl md:text-6xl font-extrabold mb-6 leading-tight">Tecnología al Servicio de tu Salud</h1>
+            <p class="text-xl md:text-2xl text-slate-300 max-w-3xl mx-auto mb-10">Conectamos pacientes con médicos especialistas, digitalizamos expedientes clínicos y garantizamos el acceso rápido a medicamentos esenciales.</p>
+            <div class="flex justify-center gap-4 flex-wrap">
+                <a href="login.html" class="bg-teal-400 hover:bg-teal-500 text-indigo-950 font-bold text-lg px-8 py-3.5 rounded-xl shadow-lg transition">
+                    <i class="fa-solid fa-calendar-check mr-2"></i>Agendar Cita como Paciente
+                </a>
+                <a href="#farmacia" class="bg-indigo-700 hover:bg-indigo-600 text-white font-bold text-lg px-8 py-3.5 rounded-xl shadow-lg transition">Ver Medicamentos</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Impacto Social con Tarjetas Ilustradas -->
+    <section id="mision" class="py-20 px-4 max-w-7xl mx-auto">
+        <div class="text-center mb-16">
+            <h2 class="text-3xl md:text-4xl font-bold text-indigo-950">¿Para qué estamos y cómo ayudamos a la sociedad?</h2>
+            <p class="text-slate-600 mt-4 text-lg">Nuestra misión es digitalizar y humanizar la atención médica en toda la comunidad.</p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8">
+            <div class="bg-white rounded-2xl shadow-md border border-slate-100 overflow-hidden hover:shadow-xl transition">
+                <img src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=600&q=80" alt="Consultas" class="w-full h-48 object-cover">
+                <div class="p-6">
+                    <h3 class="text-xl font-bold text-indigo-900 mb-2">Reducción de Esperas</h3>
+                    <p class="text-slate-600 text-sm">Eliminamos las filas largas en clínicas mediante agendamiento inteligente en tiempo real.</p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-md border border-slate-100 overflow-hidden hover:shadow-xl transition">
+                <img src="https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=600&q=80" alt="Expediente" class="w-full h-48 object-cover">
+                <div class="p-6">
+                    <h3 class="text-xl font-bold text-indigo-900 mb-2">Historial Seguro</h3>
+                    <p class="text-slate-600 text-sm">Privacidad garantizada donde solo el médico tratante consulta tus antecedentes clínicos.</p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-md border border-slate-100 overflow-hidden hover:shadow-xl transition">
+                <img src="https://images.unsplash.com/photo-1471864190281-a93a3070b6de?auto=format&fit=crop&w=600&q=80" alt="Farmacia" class="w-full h-48 object-cover">
+                <div class="p-6">
+                    <h3 class="text-xl font-bold text-indigo-900 mb-2">Recetas Digitales</h3>
+                    <p class="text-slate-600 text-sm">Acceso inmediato a tratamientos prescritos para evitar confusión en dosis o fármacos.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Catálogo de Medicamentos Conectado a BD MySQL -->
+    <section id="farmacia" class="bg-slate-100 py-20 px-4">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold text-indigo-950">Catálogo General de Medicamentos</h2>
+                <div class="max-w-md mx-auto mt-6">
+                    <input type="text" id="input-buscar" onkeyup="filtrarMedicamentos()" placeholder="Buscar medicamento por nombre o categoría..." class="w-full px-5 py-3 rounded-xl border border-slate-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+                </div>
+            </div>
+            <div id="grid-medicamentos" class="grid sm:grid-cols-2 md:grid-cols-4 gap-6">
+                <p class="col-span-full text-center text-slate-500">Cargando catálogo desde la base de datos...</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Botón Flotante -->
+    <div class="fixed bottom-6 right-6 flex flex-col gap-2 z-30">
+        <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="w-12 h-12 bg-indigo-900 hover:bg-indigo-800 text-white rounded-full shadow-lg flex items-center justify-center transition">
+            <i class="fa-solid fa-arrow-up"></i>
+        </button>
+    </div>
+
+    <script>
+        let listaMedicamentosBD = [];
+
+        // Carga los medicamentos directamente desde MySQL a través de Node.js
+        function cargarMedicamentosDesdeBD() {
+            fetch('/api/medicamentos')
+                .then(res => res.json())
+                .then(data => {
+                    listaMedicamentosBD = data;
+                    renderizarMedicamentos(listaMedicamentosBD);
+                })
+                .catch(err => {
+                    console.error('Error al cargar medicamentos:', err);
+                    document.getElementById('grid-medicamentos').innerHTML = '<p class="col-span-full text-center text-red-500 font-bold">Error al conectar con la base de datos.</p>';
+                });
+        }
+
+        function renderizarMedicamentos(lista) {
+            const grid = document.getElementById('grid-medicamentos');
+            grid.innerHTML = '';
+            
+            if (lista.length === 0) {
+                grid.innerHTML = '<p class="col-span-full text-center text-slate-500 font-semibold">No se encontraron medicamentos en el catálogo.</p>';
+                return;
+            }
+
+            lista.forEach(m => {
+                const icono = m.categoria && m.categoria.toLowerCase().includes('anti') ? 'fa-pills' : 'fa-tablets';
+                grid.innerHTML += `
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition">
+                        <div class="text-teal-600 text-3xl mb-3"><i class="fa-solid ${icono}"></i></div>
+                        <h4 class="font-bold text-lg text-indigo-950">${m.nombre}</h4>
+                        <span class="inline-block bg-teal-50 text-teal-700 text-xs font-semibold px-2 py-1 rounded mb-2">${m.categoria || 'Farmacia'}</span>
+                        <p class="text-sm text-slate-600">${m.descripcion}</p>
+                    </div>`;
+            });
+        }
+
+        function filtrarMedicamentos() {
+            const texto = document.getElementById('input-buscar').value.toLowerCase();
+            const filtrados = listaMedicamentosBD.filter(m => 
+                (m.nombre && m.nombre.toLowerCase().includes(texto)) || 
+                (m.categoria && m.categoria.toLowerCase().includes(texto)) ||
+                (m.descripcion && m.descripcion.toLowerCase().includes(texto))
+            );
+            renderizarMedicamentos(filtrados);
+        }
+
+        // Cargar al iniciar la página
+        cargarMedicamentosDesdeBD();
+    </script>
+</body>
+</html>

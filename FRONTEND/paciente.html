@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>NexusMed - Portal Paciente</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-slate-50 text-slate-800 p-6">
+    <div class="max-w-7xl mx-auto">
+        <div class="bg-blue-600 text-white p-4 rounded-xl shadow-md flex justify-between items-center mb-6">
+            <div class="flex items-center gap-3">
+                <button onclick="window.location.href='index.html'" class="bg-blue-700 hover:bg-blue-800 text-white px-3 py-1.5 rounded-lg text-sm transition">
+                    <i class="fa-solid fa-arrow-left mr-1"></i> Ir a Inicio
+                </button>
+                <h1 id="bienvenida" class="text-2xl font-bold">Portal Paciente</h1>
+            </div>
+            <button onclick="cerrarSesion()" class="bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-lg text-sm transition">Cerrar Sesión</button>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-6">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <h3 class="text-lg font-bold text-indigo-950 mb-4">Agendar Cita Médica</h3>
+                <form onsubmit="agendarCita(event)" class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Médico Especialista:</label>
+                        <select id="select-medico" onchange="cargarHorariosDisponibles()" class="w-full p-2.5 border rounded-lg text-sm" required>
+                            <option value="">Cargando médicos...</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Fecha de Consulta:</label>
+                        <input type="date" id="fecha-cita" onchange="cargarHorariosDisponibles()" class="w-full p-2.5 border rounded-lg text-sm" required>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Horarios Disponibles:</label>
+                        <select id="select-hora" class="w-full p-2.5 border rounded-lg text-sm" required disabled>
+                            <option value="">Selecciona médico y fecha primero</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-lg text-sm transition">Confirmar Cita</button>
+                </form>
+                <div id="msj-cita" class="mt-3 text-center text-xs font-bold"></div>
+            </div>
+
+            <div class="md:col-span-2 space-y-6">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <h3 class="text-lg font-bold text-indigo-950 mb-3">Mis Citas Agendadas</h3>
+                    <div id="tabla-mis-citas" class="overflow-x-auto">Cargando citas...</div>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <h3 class="text-lg font-bold text-indigo-950 mb-3">Mi Historial Clínico y Recetas</h3>
+                    <div id="contenedor-expedientes" class="space-y-3">Cargando historial...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const usuario = JSON.parse(localStorage.getItem('usuarioLogueado'));
+        if (!usuario || usuario.rol_id !== 3) window.location.href = 'login.html';
+
+        document.getElementById('bienvenida').innerText = `Bienvenido: ${usuario.nombre || 'Paciente'}`;
+
+        function cargarMedicos() {
+            fetch('/api/medicos')
+                .then(res => res.json())
+                .then(medicos => {
+                    const select = document.getElementById('select-medico');
+                    select.innerHTML = '<option value="">-- Selecciona un Médico --</option>';
+                    medicos.forEach(m => {
+                        select.innerHTML += `<option value="${m.id}">${m.nombre} - ${m.especialidad || 'General'}</option>`;
+                    });
+                });
+        }
+
+        function cargarHorariosDisponibles() {
+            const medicoId = document.getElementById('select-medico').value;
+            const fecha = document.getElementById('fecha-cita').value;
+            const selectHora = document.getElementById('select-hora');
+
+            if (!medicoId || !fecha) {
+                selectHora.innerHTML = '<option value="">Selecciona médico y fecha primero</option>';
+                selectHora.disabled = true;
+                return;
+            }
+
+            const jornada = [
+                "08:00:00", "09:00:00", "10:00:00", "11:00:00",
+                "12:00:00", "13:00:00", "14:00:00", "15:00:00", "16:00:00"
+            ];
+
+            fetch(`/api/citas/ocupadas/${medicoId}/${fecha}`)
+                .then(res => res.json())
+                .then(horasOcupadas => {
+                    selectHora.innerHTML = '<option value="">-- Selecciona un horario disponible --</option>';
+                    let hayDisponibles = false;
+                    jornada.forEach(hora => {
+                        if (!horasOcupadas.includes(hora)) {
+                            const horaFormateada = hora.substring(0, 5);
+                            selectHora.innerHTML += `<option value="${hora}">${horaFormateada} hrs</option>`;
+                            hayDisponibles = true;
+                        }
+                    });
+
+                    if (!hayDisponibles) {
+                        selectHora.innerHTML = '<option value="">No hay horarios libres en esta fecha</option>';
+                        selectHora.disabled = true;
+                    } else {
+                        selectHora.disabled = false;
+                    }
+                });
+        }
+
+        function cargarMisCitas() {
+            fetch(`/api/citas/paciente/${usuario.id}`)
+                .then(res => res.json())
+                .then(citas => {
+                    const cont = document.getElementById('tabla-mis-citas');
+                    if (citas.length === 0) {
+                        cont.innerHTML = '<p class="text-sm text-slate-500">No tienes citas agendadas.</p>';
+                        return;
+                    }
+                    let html = `<table class="w-full text-left text-xs border-collapse"><tr class="bg-slate-100"><th class="p-2 border">Médico</th><th class="p-2 border">Fecha</th><th class="p-2 border">Hora</th><th class="p-2 border">Estado</th><th class="p-2 border">Acción</th></tr>`;
+                    citas.forEach(c => {
+                        const fecha = new Date(c.fecha).toLocaleDateString();
+                        const btn = c.estado === 'pendiente' ? `<button class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs" onclick="cancelarCita(${c.id})">Cancelar</button>` : '-';
+                        html += `<tr><td class="p-2 border">${c.medico}</td><td class="p-2 border">${fecha}</td><td class="p-2 border">${c.hora}</td><td class="p-2 border font-bold">${c.estado}</td><td class="p-2 border">${btn}</td></tr>`;
+                    });
+                    cont.innerHTML = html + `</table>`;
+                });
+        }
+
+        function cargarExpediente() {
+            fetch(`/api/expedientes/paciente/${usuario.id}`)
+                .then(res => res.json())
+                .then(expedientes => {
+                    const cont = document.getElementById('contenedor-expedientes');
+                    if (expedientes.length === 0) {
+                        cont.innerHTML = '<p class="text-sm text-slate-500">Sin consultas previas.</p>';
+                        return;
+                    }
+                    let html = '';
+                    expedientes.forEach(e => {
+                        const fecha = new Date(e.fecha_consulta).toLocaleDateString();
+                        html += `
+                            <div class="bg-emerald-50 border-l-4 border-emerald-500 p-3 rounded text-xs">
+                                <strong>Fecha: ${fecha} - Médico: ${e.medico}</strong><br>
+                                <em>Diagnóstico:</em> ${e.diagnostico}<br>
+                                ${e.medicamento ? `<strong>Tratamiento:</strong> ${e.medicamento} (${e.dosis} - ${e.frecuencia})` : '<em>Sin receta.</em>'}
+                            </div>`;
+                    });
+                    cont.innerHTML = html;
+                });
+        }
+
+        function agendarCita(e) {
+            e.preventDefault();
+            const payload = {
+                paciente_id: usuario.id,
+                medico_id: document.getElementById('select-medico').value,
+                fecha: document.getElementById('fecha-cita').value,
+                hora: document.getElementById('select-hora').value
+            };
+
+            fetch('/api/citas', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(datos => {
+                const msj = document.getElementById('msj-cita');
+                msj.style.color = datos.error ? "red" : "green";
+                msj.innerText = datos.error || datos.mensaje;
+                if (!datos.error) {
+                    e.target.reset();
+                    document.getElementById('select-hora').disabled = true;
+                    cargarMisCitas();
+                }
+            });
+        }
+
+        function cancelarCita(id) {
+            if (confirm('¿Deseas cancelar esta cita?')) {
+                fetch(`/api/citas/${id}/estado`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ estado: 'cancelada' })
+                })
+                .then(() => {
+                    cargarMisCitas();
+                    cargarHorariosDisponibles();
+                });
+            }
+        }
+
+        function cerrarSesion() {
+            localStorage.removeItem('usuarioLogueado');
+            window.location.href = 'login.html';
+        }
+
+        cargarMedicos();
+        cargarMisCitas();
+        cargarExpediente();
+    </script>
+</body>
+</html>
